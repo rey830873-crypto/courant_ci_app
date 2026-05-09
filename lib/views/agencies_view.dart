@@ -14,8 +14,35 @@ class AgenciesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      appBar: AppBar(title: const Text("Nos Agences")),
+      appBar: AppBar(
+        title: const Text("Nos Agences"),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(70),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "Rechercher une agence...",
+                prefixIcon: const Icon(Icons.search, color: AppTheme.cieOrange),
+                filled: true,
+                fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: isDark ? BorderSide.none : BorderSide(color: Colors.grey.withOpacity(0.3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: isDark ? BorderSide.none : BorderSide(color: Colors.grey.withOpacity(0.3)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: agencies.length,
@@ -38,7 +65,14 @@ class AgenciesView extends StatelessWidget {
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.directions, color: Colors.blue),
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Ouverture de l'itinéraire vers ${agency['name']}..."),
+                      backgroundColor: AppTheme.cieOrange,
+                    ),
+                  );
+                },
               ),
             ),
           );
