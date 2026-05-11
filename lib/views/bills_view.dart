@@ -10,10 +10,6 @@ class BillsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mes Factures"),
-        centerTitle: true,
-      ),
       body: Consumer<UserViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.bills.isEmpty) {

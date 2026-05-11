@@ -19,10 +19,6 @@ class ProfileView extends StatelessWidget {
     final viewModel = Provider.of<UserViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mon Profil"),
-        centerTitle: true,
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

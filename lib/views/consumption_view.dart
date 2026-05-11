@@ -28,7 +28,6 @@ class _ConsumptionViewState extends State<ConsumptionView> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Ma Consommation")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(

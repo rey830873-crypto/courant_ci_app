@@ -12,7 +12,6 @@ class ContractsView extends StatelessWidget {
     final viewModel = Provider.of<UserViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Mes Contrats / Compteurs")),
       body: ListView.builder(
         padding: const EdgeInsets.all(20),
         itemCount: viewModel.contracts.length,
