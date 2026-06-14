@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Règles Firestore — CourantInfo CI (CIC), V1.
+//
+// Contexte important : en mode invité, l'application n'utilise PAS
+// Firebase Auth (même pas la connexion anonyme) — l'utilisateur est
+// identifié par un `deviceId` généré localement (voir
+// `LocalStorageService.getOrCreateDeviceId()` et BACKEND.md). Côté
+// Firestore, ces requêtes arrivent donc avec `request.auth == null`.
+//
+// Conséquence : `reports` et `meter_readings` doivent rester
+// lisibles/créables sans authentification pour que F1/F3/F4/F2/F7
+// fonctionnent en mode invité. La sécurité V1 repose donc sur :
+//   1. la validation de la FORME des documents créés (ci-dessous) ;
+//   2. l'absence totale de `update`/`delete` (journal en ajout seul) ;
+//   3. la limitation de débit côté app (5 signalements/heure, locale).
+//
+// Voir la section "Production hardening" de BACKEND.md pour les pistes
+// de renforcement avant un déploiement à plus grande échelle (App
+// Check, connexion anonyme Firebase, validation côté Cloud Functions).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Signalements communautaires (F4), agrégés en statut réseau (F1) ---
+    match /reports/{reportId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+                          ['commune', 'quartier', 'type', 'timestamp', 'zoneId']
+                        )
+                    && request.resource.data.commune is string
+                    && request.resource.data.commune.size() > 0
+                    && request.resource.data.quartier is string
+                    && request.resource.data.type in ['outage', 'restored', 'hazard']
+                    && request.resource.data.timestamp is string
+                    && request.resource.data.zoneId
+                        == request.resource.data.commune + '::' + request.resource.data.quartier
+                    && (!('description' in request.resource.data)
+                        || request.resource.data.description == null
+                        || (request.resource.data.description is string
+                            && request.resource.data.description.size() <= 280))
+                    && (!('userId' in request.resource.data)
+                        || request.resource.data.userId == null
+                        || request.resource.data.userId is string);
+
+      // Journal en ajout seul : aucune modification ni suppression a
+      // posteriori (même par l'auteur), pour garantir l'intégrité de
+      // l'historique utilisé par F1.
+      allow update, delete: if false;
+    }
+
+    // --- Relevés de compteur prépayé (F2), source de F7 ---
+    match /meter_readings/{readingId} {
+      // Lecture publique nécessaire à la comparaison de quartier (F7) :
+      // un utilisateur doit pouvoir lire les relevés (anonymisés au
+      // niveau commune) des autres utilisateurs de sa commune.
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+                          ['ownerId', 'meterNumber', 'kwhBalance', 'timestamp', 'commune', 'quartier']
+                        )
+                    && request.resource.data.ownerId is string
+                    && request.resource.data.ownerId.size() > 0
+                    && request.resource.data.meterNumber is string
+                    && request.resource.data.meterNumber.size() > 0
+                    && request.resource.data.kwhBalance is number
+                    && request.resource.data.kwhBalance >= 0
+                    && request.resource.data.kwhBalance <= 100000
+                    && request.resource.data.timestamp is string
+                    && request.resource.data.commune is string
+                    && request.resource.data.quartier is string;
+
+      allow update, delete: if false;
+    }
+
+    // --- Profils utilisateurs inscrits (créés par AuthRepository) ---
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
