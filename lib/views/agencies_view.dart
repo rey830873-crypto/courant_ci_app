@@ -60,19 +60,39 @@ class AgenciesView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(agency['address']!),
-                  Text("Ouvert: ${agency['hours']}", style: const TextStyle(fontSize: 12, color: AppTheme.cieOrange)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 12, color: AppTheme.cieOrange),
+                      const SizedBox(width: 4),
+                      Text("Ouvert: ${agency['hours']}", style: const TextStyle(fontSize: 12, color: AppTheme.cieOrange, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
                 ],
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.directions, color: Colors.blue),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Ouverture de l'itinéraire vers ${agency['name']}..."),
-                      backgroundColor: AppTheme.cieOrange,
-                    ),
-                  );
-                },
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.phone, color: Colors.green, size: 20),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Appel de l'agence ${agency['name']}...")),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.directions, color: Colors.blue, size: 20),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Ouverture de l'itinéraire vers ${agency['name']}..."),
+                          backgroundColor: AppTheme.cieOrange,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           );
