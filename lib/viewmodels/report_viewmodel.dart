@@ -70,11 +70,25 @@ class ReportViewModel extends ChangeNotifier {
   int get reportsRemainingThisHour =>
       (AppConstants.maxReportsPerHour - _localStorage.getReportCountLastHour())
           .clamp(0, AppConstants.maxReportsPerHour);
-  bool get canSubmit => reportsRemainingThisHour > 0;
+
+  /// Le signalement communautaire (F4) nécessite un compte vérifié :
+  /// un invité peut consulter la carte et le statut réseau, mais ne
+  /// peut pas contribuer de signalement.
+  bool get requiresAccount => !_session.isRegistered;
+
+  bool get canSubmit => !requiresAccount && reportsRemainingThisHour > 0;
 
   /// Envoie un signalement pour la zone de l'utilisateur. [description]
   /// est optionnelle (non requise pour le flux "2 clics").
   Future<void> submitReport(ReportType type, {String? description}) async {
+    if (requiresAccount) {
+      _status = ReportSubmissionStatus.error;
+      _errorMessage =
+          'Crée un compte pour envoyer un signalement à la communauté.';
+      notifyListeners();
+      return;
+    }
+
     if (!canSubmit) {
       _status = ReportSubmissionStatus.error;
       _errorMessage =

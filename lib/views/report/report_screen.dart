@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/report_type_style.dart';
 import '../../core/theme/zone_status_style.dart';
 import '../../data/models/zone_model.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/report_list_tile.dart';
 import '../../core/widgets/sentinel_progress_card.dart';
 import '../../core/widgets/status_chip.dart';
@@ -108,7 +111,46 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (!vm.canSubmit)
+            if (vm.requiresAccount)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: AppCard(
+                  color: AppColors.primaryLight,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.lock_outline,
+                              color: AppColors.primaryDark, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Crée un compte pour signaler',
+                              style: textTheme.titleSmall
+                                  ?.copyWith(color: AppColors.primaryDark),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Les signalements demandent un compte vérifié, pour '
+                        'que la communauté puisse s\'y fier.',
+                        style: textTheme.bodySmall
+                            ?.copyWith(color: AppColors.primaryDark),
+                      ),
+                      const SizedBox(height: 12),
+                      PrimaryButton(
+                        label: 'Créer un compte',
+                        icon: Icons.person_add_alt,
+                        onPressed: () => context.push(AppRoutes.register),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (!vm.canSubmit)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Container(
@@ -138,19 +180,25 @@ class _ReportScreenState extends State<ReportScreen> {
             _ReportTypeButton(
               type: ReportType.outage,
               subtitle: 'Le courant est coupé chez toi',
-              onTap: isSubmitting ? null : () => _submit(ReportType.outage),
+              onTap: (isSubmitting || vm.requiresAccount)
+                  ? null
+                  : () => _submit(ReportType.outage),
             ),
             const SizedBox(height: 10),
             _ReportTypeButton(
               type: ReportType.restored,
               subtitle: 'Le courant vient de revenir',
-              onTap: isSubmitting ? null : () => _submit(ReportType.restored),
+              onTap: (isSubmitting || vm.requiresAccount)
+                  ? null
+                  : () => _submit(ReportType.restored),
             ),
             const SizedBox(height: 10),
             _ReportTypeButton(
               type: ReportType.hazard,
               subtitle: 'Câble à terre, étincelles, fumée...',
-              onTap: isSubmitting ? null : () => _submit(ReportType.hazard),
+              onTap: (isSubmitting || vm.requiresAccount)
+                  ? null
+                  : () => _submit(ReportType.hazard),
             ),
             const SizedBox(height: 24),
             SentinelProgressCard(points: vm.cicPoints, isSentinel: vm.isSentinel),

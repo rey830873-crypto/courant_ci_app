@@ -1,41 +1,23 @@
-import 'package:flutter/foundation.dart';
-
 /// Service d'authentification simulé (remplace Firebase Auth).
+///
+/// Aucun vrai SMS n'est envoyé : la création de compte est immédiate
+/// dès que le numéro de téléphone est fourni.
 class AuthService {
   String? _mockUserUid;
 
   /// UID de l'utilisateur connecté (simulé).
   String? get currentUserId => _mockUserUid;
 
-  /// Simule l'envoi d'un code OTP.
-  Future<void> sendOtp({
-    required String phoneNumber,
-    required VoidCallback onCodeSent,
-    required void Function(String message) onError,
-  }) async {
-    // Simulation d'un délai réseau
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (phoneNumber.length < 8) {
-      onError('Numéro de téléphone invalide.');
-      return;
+  /// Simule la création d'un compte à partir du numéro de téléphone.
+  Future<String> registerWithPhone(String phoneNumber) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (phoneNumber.replaceAll(RegExp(r'[^0-9]'), '').length < 8) {
+      throw Exception('Numéro de téléphone invalide.');
     }
 
-    // Dans une vraie API, on appellerait un endpoint ici
-    debugPrint('SIMULATION : Code envoyé au $phoneNumber');
-    onCodeSent();
-  }
-
-  /// Simule la vérification du code OTP (le code "123456" est toujours valide).
-  Future<String> verifyOtp(String smsCode) async {
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (smsCode == '123456' || kDebugMode) {
-      _mockUserUid = 'user_mock_123';
-      return _mockUserUid!;
-    } else {
-      throw Exception('Code OTP incorrect.');
-    }
+    _mockUserUid = 'user_mock_123';
+    return _mockUserUid!;
   }
 
   Future<void> signOut() async {

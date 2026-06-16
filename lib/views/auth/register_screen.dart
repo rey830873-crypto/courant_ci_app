@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 
-/// Inscription par numéro de téléphone + code OTP (CDC section 6.2,
-/// étape 2). Le numéro est envoyé au format E.164 avec l'indicatif
-/// ivoirien (+225).
+/// Inscription par numéro de téléphone (CDC section 6.2, étape 2). Le
+/// numéro est envoyé au format E.164 avec l'indicatif ivoirien (+225).
 ///
-/// Une fois le code vérifié, une étape facultative permet de renseigner
-/// nom/prénom et email — aucun des deux n'est obligatoire (CDC :
-/// "pas de compte obligatoire" reste vrai même en mode inscrit, on ne
-/// bloque jamais sur ces champs).
+/// Pas d'étape de vérification par code SMS : tout est simulé en local
+/// (aucun vrai SMS n'est envoyé), donc demander à la personne de
+/// recopier un code n'apportait rien de plus qu'une étape à vide.
+/// Une fois le numéro saisi, une étape facultative permet de
+/// renseigner nom/prénom et email — aucun des deux n'est obligatoire
+/// (CDC : "pas de compte obligatoire" reste vrai même en mode inscrit,
+/// on ne bloque jamais sur ces champs).
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -20,11 +21,10 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-enum _RegisterStep { phone, otp, profile }
+enum _RegisterStep { phone, profile }
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   _RegisterStep _step = _RegisterStep.phone;
@@ -32,7 +32,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
-    _otpController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
@@ -43,47 +42,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return '+225$digits';
   }
 
-  Future<void> _sendCode() async {
-    final authVM = context.read<AuthViewModel>();
-    await authVM.sendOtp(_formattedPhone);
-    if (!mounted) return;
-    if (authVM.status == AuthFlowStatus.codeSent) {
-      setState(() => _step = _RegisterStep.otp);
-    }
-  }
-
-  /// Vérifie uniquement que le code est correct, sans encore finaliser
-  /// l'inscription : on enchaîne d'abord sur l'étape "profil"
-  /// facultative, et c'est elle qui appelle réellement
-  /// [AuthViewModel.verifyOtp] avec nom/email une fois confirmée ou
-  /// passée.
-  void _confirmOtpEntered() {
-    if (_otpController.text.trim().length == 6) {
-      setState(() => _step = _RegisterStep.profile);
-    }
+  void _continueToProfileStep() {
+    if (_phoneController.text.trim().isEmpty) return;
+    setState(() => _step = _RegisterStep.profile);
   }
 
   Future<void> _finishRegistration() async {
     final authVM = context.read<AuthViewModel>();
     await authVM.verifyOtp(
-      _otpController.text.trim(),
+      _formattedPhone,
       displayName: _nameController.text.trim(),
       email: _emailController.text.trim(),
     );
-    // En cas de code invalide, AuthViewModel bascule en
-    // AuthFlowStatus.error : on revient à l'étape OTP pour que le
-    // message d'erreur (affiché plus bas) reste visible et que la
-    // personne puisse corriger le code.
-    if (!mounted) return;
-    if (authVM.status == AuthFlowStatus.error) {
-      setState(() => _step = _RegisterStep.otp);
-    }
   }
 
   void _skipProfileStep() => _finishRegistration();
 
   void _editPhoneNumber() {
-    context.read<AuthViewModel>().resetToPhoneStep();
+    context.read<AuthViewModel>().resetError();
     setState(() => _step = _RegisterStep.phone);
   }
 
@@ -95,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
       body: SafeArea(
@@ -107,7 +83,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 switch (_step) {
                   _RegisterStep.phone => 'Ton numéro CI',
-                  _RegisterStep.otp => 'Entre le code reçu',
                   _RegisterStep.profile => 'Pour finir (facultatif)',
                 },
                 style: Theme.of(context).textTheme.headlineMedium,
@@ -116,11 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 switch (_step) {
                   _RegisterStep.phone =>
-                    'On t\'envoie un code par SMS pour vérifier ton '
-                        'numéro.',
-                  _RegisterStep.otp =>
-                    'Un code à 6 chiffres a été envoyé par SMS au '
-                        '$_formattedPhone.',
+                    'Ton numéro identifie ton compte CIC.',
                   _RegisterStep.profile =>
                     'Ajoute ton nom et ton email pour personnaliser ton '
                         'profil. Tu peux passer cette étape, ton compte '
@@ -139,19 +110,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixText: '+225 ',
                     hintText: '07 00 00 00 00',
                     prefixIcon: Icon(Icons.phone_outlined),
-                  ),
-                ),
-              ] else if (_step == _RegisterStep.otp) ...[
-                TextField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  maxLength: 6,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  decoration: const InputDecoration(
-                    counterText: '',
-                    hintText: '------',
                   ),
                 ),
               ] else ...[
@@ -204,14 +162,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 28),
               PrimaryButton(
                 label: switch (_step) {
-                  _RegisterStep.phone => 'Envoyer le code',
-                  _RegisterStep.otp => 'Vérifier',
+                  _RegisterStep.phone => 'Continuer',
                   _RegisterStep.profile => 'Terminer',
                 },
                 isLoading: authVM.isBusy,
                 onPressed: switch (_step) {
-                  _RegisterStep.phone => _sendCode,
-                  _RegisterStep.otp => _confirmOtpEntered,
+                  _RegisterStep.phone => _continueToProfileStep,
                   _RegisterStep.profile => _finishRegistration,
                 },
               ),
@@ -223,8 +179,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   isLoading: authVM.isBusy,
                   onPressed: _skipProfileStep,
                 ),
-              ],
-              if (_step == _RegisterStep.otp) ...[
                 const SizedBox(height: 12),
                 PrimaryButton(
                   label: 'Modifier le numéro',

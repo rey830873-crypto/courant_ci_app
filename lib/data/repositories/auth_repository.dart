@@ -12,36 +12,24 @@ class AuthRepository {
   // Le service est toujours prêt maintenant qu'on n'utilise plus Firebase
   bool get isFirebaseReady => true;
 
-  Future<void> sendOtp({
-    required String phoneNumber,
-    required void Function() onCodeSent,
-    required void Function(String message) onError,
-  }) {
-    return _authService.sendOtp(
-      phoneNumber: phoneNumber,
-      onCodeSent: onCodeSent,
-      onError: onError,
-    );
-  }
-
-  /// Vérifie le code OTP (simulé), puis construit le profil [UserModel].
+  /// Crée (simule) un compte à partir du numéro de téléphone, puis
+  /// construit le profil [UserModel].
   ///
   /// [displayName] et [email] sont facultatifs (CDC : pas de compte
   /// obligatoire, l'inscription par téléphone seule reste valide).
   Future<UserModel> verifyOtpAndGetUser(
-    String smsCode, {
+    String phoneNumber, {
     required String commune,
     required String quartier,
     String? meterNumber,
-    String? phoneNumber, // Ajouté pour la simulation
     String? displayName,
     String? email,
   }) async {
-    final uid = await _authService.verifyOtp(smsCode);
+    final uid = await _authService.registerWithPhone(phoneNumber);
 
     final user = UserModel(
       uid: uid,
-      phoneNumber: phoneNumber ?? '+2250700000000',
+      phoneNumber: phoneNumber,
       displayName: (displayName != null && displayName.trim().isNotEmpty)
           ? displayName.trim()
           : 'Utilisateur Courant CI',

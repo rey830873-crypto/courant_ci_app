@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/models/user_model.dart';
 import '../../viewmodels/session_viewmodel.dart';
 import '../../views/about/about_screen.dart';
 import '../../views/auth/auth_choice_screen.dart';
@@ -69,12 +70,21 @@ class AppRouter {
           return AppRoutes.dashboard;
         }
 
-        // Un compte déjà inscrit, ou un invité qui vient de choisir ce
-        // mode, n'ont plus besoin de rester sur /auth : direction le
-        // tableau de bord. Seul un invité explicitement venu sur
-        // /auth/register (CTA "créer un compte" depuis le profil) doit
-        // pouvoir y rester.
-        if (isAuthFlow && location != AppRoutes.register) {
+        // Un compte déjà inscrit n'a plus besoin de rester sur /auth :
+        // direction le tableau de bord — y compris juste après avoir
+        // terminé l'inscription depuis /auth/register (c'est le signal
+        // qui doit déclencher la redirection vers l'accueil une fois
+        // "Terminer"/"Passer cette étape" appelés avec succès).
+        //
+        // Seul un invité (mode == guest) qui vient d'arriver sur
+        // /auth/register pour créer un compte — par exemple depuis le
+        // bouton "Créer un compte" du profil — doit pouvoir y rester
+        // pendant qu'il remplit le formulaire, sans être éjecté avant
+        // d'avoir terminé.
+        final isFillingRegisterForm =
+            location == AppRoutes.register && mode == UserMode.guest;
+
+        if (isAuthFlow && !isFillingRegisterForm) {
           return AppRoutes.dashboard;
         }
 

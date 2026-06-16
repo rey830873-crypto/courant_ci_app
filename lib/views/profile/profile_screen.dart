@@ -154,8 +154,8 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Sauvegarde ton profil et débloque la recharge directe '
-                    'de compteur (F8) et l\'historique complet.',
+                    'Sauvegarde ton profil et débloque les signalements '
+                    'communautaires et le suivi de ta consommation.',
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium

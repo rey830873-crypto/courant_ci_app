@@ -5,11 +5,14 @@ import 'session_viewmodel.dart';
 import 'user_viewmodel.dart';
 
 /// Étapes du flux d'inscription par téléphone (CDC section 6.2,
-/// étape 2 : "numéro de téléphone + code OTP SMS").
-enum AuthFlowStatus { idle, sendingCode, codeSent, verifying, error }
+/// étape 2). Pas d'étape de vérification par code : l'authentification
+/// est entièrement simulée en local (aucun vrai SMS n'est envoyé), donc
+/// un code à recopier n'aurait été qu'une étape à vide sans valeur
+/// réelle ici.
+enum AuthFlowStatus { idle, registering, error }
 
-/// Gère le choix "Invité" vs "Créer un compte", ainsi que l'envoi et la
-/// vérification du code OTP pour l'inscription.
+/// Gère le choix "Invité" vs "Créer un compte", ainsi que la création
+/// du profil à partir du numéro de téléphone.
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _repo;
   final SessionViewModel _session;
@@ -19,19 +22,15 @@ class AuthViewModel extends ChangeNotifier {
 
   AuthFlowStatus _status = AuthFlowStatus.idle;
   String? _errorMessage;
-  String _phoneNumber = '';
 
   AuthFlowStatus get status => _status;
   String? get errorMessage => _errorMessage;
-  String get phoneNumber => _phoneNumber;
 
   /// Vrai si Firebase est configuré pour ce projet — sinon seul le mode
   /// invité est disponible (voir [AuthService.isAvailable]).
   bool get isFirebaseReady => _repo.isFirebaseReady;
 
-  bool get isBusy =>
-      _status == AuthFlowStatus.sendingCode ||
-      _status == AuthFlowStatus.verifying;
+  bool get isBusy => _status == AuthFlowStatus.registering;
 
   /// Active le mode "Invité" : l'utilisateur garde la zone/compteur
   /// choisis pendant l'onboarding, sans créer de compte.
@@ -39,40 +38,22 @@ class AuthViewModel extends ChangeNotifier {
     await _session.setUserMode(UserMode.guest);
   }
 
-  /// Envoie un code OTP au numéro fourni. [phone] doit être au format
-  /// E.164 (ex: +2250700000000).
-  Future<void> sendOtp(String phone) async {
-    _phoneNumber = phone;
-    _status = AuthFlowStatus.sendingCode;
-    _errorMessage = null;
-    notifyListeners();
-
-    await _repo.sendOtp(
-      phoneNumber: phone,
-      onCodeSent: () {
-        _status = AuthFlowStatus.codeSent;
-        notifyListeners();
-      },
-      onError: (message) {
-        _status = AuthFlowStatus.error;
-        _errorMessage = message;
-        notifyListeners();
-      },
-    );
-  }
-
-  /// Vérifie le code OTP saisi, crée le profil utilisateur et bascule la
-  /// session en mode "Inscrit". [displayName] et [email] sont facultatifs
-  /// (CDC : aucune information n'est obligatoire au-delà du numéro
-  /// vérifié par SMS).
-  Future<void> verifyOtp(String code, {String? displayName, String? email}) async {
-    _status = AuthFlowStatus.verifying;
+  /// Crée le profil à partir du numéro de téléphone fourni (format
+  /// E.164, ex: +2250700000000) et bascule la session en mode
+  /// "Inscrit". [displayName] et [email] sont facultatifs (CDC :
+  /// aucune information n'est obligatoire au-delà du numéro).
+  Future<void> verifyOtp(
+    String phoneNumber, {
+    String? displayName,
+    String? email,
+  }) async {
+    _status = AuthFlowStatus.registering;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final user = await _repo.verifyOtpAndGetUser(
-        code,
+        phoneNumber,
         commune: _session.commune ?? '',
         quartier: _session.quartier ?? '',
         meterNumber: _session.meterNumber,
@@ -85,16 +66,20 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (_) {
       _status = AuthFlowStatus.error;
-      _errorMessage = 'Code invalide ou expiré, réessaie.';
+      _errorMessage = 'La création du compte a échoué, réessaie.';
       notifyListeners();
     }
   }
 
-  /// Revient à l'étape de saisie du numéro (ex: "Modifier le numéro").
-  void resetToPhoneStep() {
-    _status = AuthFlowStatus.idle;
-    _errorMessage = null;
-    notifyListeners();
+  /// Efface un message d'erreur affiché précédemment (ex: après
+  /// "Modifier le numéro", pour ne pas garder un ancien message visible
+  /// au prochain essai).
+  void resetError() {
+    if (_status == AuthFlowStatus.error) {
+      _status = AuthFlowStatus.idle;
+      _errorMessage = null;
+      notifyListeners();
+    }
   }
 
   /// Déconnexion : efface la session inscrite (l'UID simulé, le profil
