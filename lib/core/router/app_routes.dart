@@ -18,4 +18,5 @@ class AppRoutes {
   static const String meter = '/meter';
   static const String report = '/report';
   static const String profile = '/profile';
+  static const String about = '/profile/about';
 }

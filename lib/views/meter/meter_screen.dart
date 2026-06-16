@@ -48,6 +48,7 @@ class _MeterScreenState extends State<MeterScreen> {
 
     final result = await showDialog<String>(
       context: context,
+      useRootNavigator: false,
       builder: (context) => AlertDialog(
         title: const Text('Modifier le numéro de compteur'),
         content: TextField(

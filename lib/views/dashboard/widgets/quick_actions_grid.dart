@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../core/router/main_shell_tab_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_card.dart';
 
@@ -24,7 +25,7 @@ class QuickActionsGrid extends StatelessWidget {
         _ActionTile(
           icon: Icons.campaign_outlined,
           label: 'Signaler',
-          onTap: () => context.go(AppRoutes.report),
+          onTap: () => requestTab(MainShellTab.report),
         ),
         _ActionTile(
           icon: Icons.calculate_outlined,
@@ -34,7 +35,7 @@ class QuickActionsGrid extends StatelessWidget {
         _ActionTile(
           icon: Icons.add_card_outlined,
           label: 'Recharger',
-          onTap: () => context.go(AppRoutes.meter),
+          onTap: () => requestTab(MainShellTab.meter),
         ),
         _ActionTile(
           icon: Icons.shield_outlined,

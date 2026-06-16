@@ -88,6 +88,24 @@ class AppConstants {
       latitude: 5.2925,
       longitude: -3.9445,
     ),
+    Commune(
+      name: 'Grand-Bassam',
+      quartiers: ['Quartier France', 'Imbasso', 'Moossou'],
+      latitude: 5.2118,
+      longitude: -3.7388,
+    ),
+    Commune(
+      name: 'Bingerville',
+      quartiers: ['Centre-ville', 'Adjin', 'Akouédo'],
+      latitude: 5.3556,
+      longitude: -3.8853,
+    ),
+    Commune(
+      name: 'Anyama',
+      quartiers: ['Centre-ville', 'Akeikoi', 'Akouédo-Anyama'],
+      latitude: 5.4877,
+      longitude: -4.0517,
+    ),
   ];
 
   // --- Carte (F3) ---
@@ -96,7 +114,11 @@ class AppConstants {
   /// Abidjan dans le contexte de la Côte d'Ivoire.
   static const double mapCenterLat = 5.335;
   static const double mapCenterLng = -4.009;
-  static const double mapDefaultZoom = 11.5;
+  // Légèrement réduit (était 11.5) pour que Grand-Bassam, Bingerville et
+  // Anyama (ajoutées avec Koumassi en dernières communes ci-dessus, plus
+  // excentrées que les 8 communes initiales) restent visibles d'emblée
+  // sans que l'utilisateur ait besoin de dézoomer manuellement.
+  static const double mapDefaultZoom = 10.3;
   static const double mapMinZoom = 6;
   static const double mapMaxZoom = 17;
 

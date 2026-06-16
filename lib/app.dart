@@ -24,6 +24,27 @@ class CICApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: router,
+      // Désactive le HeroController automatique de MaterialApp.router.
+      //
+      // Ce contrôleur scanne tout l'arbre de widgets à chaque frame pour
+      // détecter des paires de Hero à animer entre deux routes — utile
+      // pour des transitions de type "image qui s'agrandit". On n'utilise
+      // aucun Hero volontairement dans cette app, mais certains widgets
+      // Material (AppBar, etc.) en posent parfois un de façon implicite.
+      // Avec le shell principal qui garde 5 écrans (5 AppBar) montés
+      // simultanément via IndexedStack pour préserver leur état, ce
+      // balayage automatique se corrompt et déclenche en cascade les
+      // erreurs observées (`_dependents.isEmpty`, `RenderObject.child ==
+      // child`, `Duplicate GlobalKeys`, `TextEditingController used after
+      // disposed`) lors de la fermeture d'un dialogue ou d'un changement
+      // de thème. Le HeroControllerScope.none ci-dessous retire
+      // entièrement ce mécanisme, sans qu'on perde quoi que ce soit
+      // puisqu'aucune transition Hero n'était utilisée.
+      builder: (context, child) {
+        return HeroControllerScope.none(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

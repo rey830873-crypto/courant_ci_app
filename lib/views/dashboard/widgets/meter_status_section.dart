@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../core/router/app_routes.dart';
+import '../../../core/router/main_shell_tab_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -124,7 +123,7 @@ class _SetupPrompt extends StatelessWidget {
           PrimaryButton(
             label: actionLabel,
             icon: Icons.arrow_forward,
-            onPressed: () => context.go(AppRoutes.meter),
+            onPressed: () => requestTab(MainShellTab.meter),
           ),
         ],
       ),

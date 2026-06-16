@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +24,18 @@ import 'viewmodels/user_viewmodel.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialise Firebase si le projet a été configuré (`flutterfire
+  // configure`, qui génère lib/firebase_options.dart). Si ce fichier
+  // n'existe pas encore ou que l'init échoue pour une autre raison, on
+  // continue avec des dépôts simulés (Mock) ci-dessous — l'app reste
+  // utilisable, voir BACKEND.md section 1.
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase non initialisé (flutterfire configure ?) : $e');
+  }
+  final firebaseReady = Firebase.apps.isNotEmpty;
+
   final prefs = await SharedPreferences.getInstance();
   final localStorage = LocalStorageService(prefs);
 
@@ -34,9 +47,13 @@ Future<void> main() async {
   // Utilisation d'identifiants locaux (Mode API simulé)
   final ownerId = authService.currentUserId ?? localStorage.getOrCreateDeviceId();
 
-  // Utilisation des dépôts Mock (Simulés)
-  final reportRepo = MockReportRepository(); 
-  final meterReadingRepo = MockMeterReadingRepository();
+  // Firestore si Firebase est configuré, sinon dépôts simulés (Mock) —
+  // dans les deux cas l'app fonctionne immédiatement (voir BACKEND.md).
+  final ReportRepository reportRepo =
+      firebaseReady ? FirestoreReportRepository() : MockReportRepository();
+  final MeterReadingRepository meterReadingRepo = firebaseReady
+      ? FirestoreMeterReadingRepository()
+      : MockMeterReadingRepository();
 
   final meterConsumptionRepo = MeterConsumptionRepository(
     readingRepo: meterReadingRepo,
@@ -53,7 +70,11 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => UserViewModel()), // Ajout du UserViewModel
         ChangeNotifierProvider(
-          create: (_) => AuthViewModel(authRepository, session),
+          create: (context) => AuthViewModel(
+            authRepository,
+            session,
+            context.read<UserViewModel>(),
+          ),
         ),
         Provider<ReportRepository>.value(value: reportRepo),
         ChangeNotifierProvider(

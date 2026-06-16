@@ -27,7 +27,7 @@ class AgenciesViewModel extends ChangeNotifier {
       _allAgencies = data.map((json) => AgencyModel.fromJson(json)).toList();
       _applyFilter();
     } catch (e) {
-      debugPrint('Erreur lors du chargement des agences: \$e');
+      debugPrint('Erreur lors du chargement des agences: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

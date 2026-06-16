@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 import 'session_viewmodel.dart';
+import 'user_viewmodel.dart';
 
 /// Étapes du flux d'inscription par téléphone (CDC section 6.2,
 /// étape 2 : "numéro de téléphone + code OTP SMS").
@@ -12,8 +13,9 @@ enum AuthFlowStatus { idle, sendingCode, codeSent, verifying, error }
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _repo;
   final SessionViewModel _session;
+  final UserViewModel _userViewModel;
 
-  AuthViewModel(this._repo, this._session);
+  AuthViewModel(this._repo, this._session, this._userViewModel);
 
   AuthFlowStatus _status = AuthFlowStatus.idle;
   String? _errorMessage;
@@ -60,19 +62,24 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   /// Vérifie le code OTP saisi, crée le profil utilisateur et bascule la
-  /// session en mode "Inscrit".
-  Future<void> verifyOtp(String code) async {
+  /// session en mode "Inscrit". [displayName] et [email] sont facultatifs
+  /// (CDC : aucune information n'est obligatoire au-delà du numéro
+  /// vérifié par SMS).
+  Future<void> verifyOtp(String code, {String? displayName, String? email}) async {
     _status = AuthFlowStatus.verifying;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _repo.verifyOtpAndGetUser(
+      final user = await _repo.verifyOtpAndGetUser(
         code,
         commune: _session.commune ?? '',
         quartier: _session.quartier ?? '',
         meterNumber: _session.meterNumber,
+        displayName: displayName,
+        email: email,
       );
+      _userViewModel.setUser(user);
       await _session.setUserMode(UserMode.registered);
       _status = AuthFlowStatus.idle;
       notifyListeners();
@@ -88,5 +95,15 @@ class AuthViewModel extends ChangeNotifier {
     _status = AuthFlowStatus.idle;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  /// Déconnexion : efface la session inscrite (l'UID simulé, le profil
+  /// chargé) et fait retomber l'utilisateur sur l'écran "Créer un
+  /// compte / Invité". La zone et le numéro de compteur enregistrés
+  /// pendant l'onboarding restent inchangés.
+  Future<void> signOut() async {
+    await _repo.signOut();
+    _userViewModel.setUser(null);
+    await _session.clearUserMode();
   }
 }

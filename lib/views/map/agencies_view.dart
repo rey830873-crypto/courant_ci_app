@@ -77,7 +77,7 @@ class _AgencyTile extends StatelessWidget {
   const _AgencyTile({required this.agency});
 
   Future<void> _makeCall() async {
-    final url = Uri.parse('tel:\${agency.phone}');
+    final url = Uri.parse('tel:${agency.phone}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     }
@@ -85,7 +85,7 @@ class _AgencyTile extends StatelessWidget {
 
   Future<void> _openDirections() async {
     final url = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=\${agency.latitude},\${agency.longitude}');
+        'https://www.google.com/maps/dir/?api=1&destination=${agency.latitude},${agency.longitude}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }

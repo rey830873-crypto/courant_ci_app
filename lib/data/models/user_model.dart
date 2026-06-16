@@ -27,6 +27,7 @@ class UserModel {
   final String? uid;
   final String? phoneNumber;
   final String displayName;
+  final String? email;
   final String commune;
   final String quartier;
   final String? meterNumber;
@@ -40,6 +41,7 @@ class UserModel {
     required this.uid,
     required this.phoneNumber,
     required this.displayName,
+    this.email,
     required this.commune,
     required this.quartier,
     required this.meterNumber,
@@ -60,6 +62,7 @@ class UserModel {
       uid: null,
       phoneNumber: null,
       displayName: 'Invité',
+      email: null,
       commune: commune,
       quartier: quartier,
       meterNumber: meterNumber,
@@ -75,6 +78,7 @@ class UserModel {
     String? uid,
     String? phoneNumber,
     String? displayName,
+    String? email,
     String? commune,
     String? quartier,
     String? meterNumber,
@@ -87,6 +91,7 @@ class UserModel {
       uid: uid ?? this.uid,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
       commune: commune ?? this.commune,
       quartier: quartier ?? this.quartier,
       meterNumber: meterNumber ?? this.meterNumber,
@@ -102,6 +107,7 @@ class UserModel {
     return {
       'phoneNumber': phoneNumber,
       'displayName': displayName,
+      'email': email,
       'commune': commune,
       'quartier': quartier,
       'meterNumber': meterNumber,
@@ -118,6 +124,7 @@ class UserModel {
       uid: uid,
       phoneNumber: map['phoneNumber'] as String?,
       displayName: map['displayName'] as String? ?? 'Utilisateur CIC',
+      email: map['email'] as String?,
       commune: map['commune'] as String? ?? '',
       quartier: map['quartier'] as String? ?? '',
       meterNumber: map['meterNumber'] as String?,

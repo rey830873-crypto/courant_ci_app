@@ -71,4 +71,14 @@ class SessionViewModel extends ChangeNotifier {
     await _storage.setMeterNumber(meterNumber);
     notifyListeners();
   }
+
+  /// Déconnexion : efface le mode (invité ou inscrit) pour que
+  /// l'utilisateur retombe sur l'écran "Créer un compte / Invité" au
+  /// prochain démarrage, sans repasser par tout l'onboarding (zone et
+  /// compteur restent enregistrés).
+  Future<void> clearUserMode() async {
+    _userMode = null;
+    await _storage.setUserMode(null);
+    notifyListeners();
+  }
 }

@@ -32,8 +32,12 @@ class LocalStorageService {
     return UserMode.values.where((m) => m.name == raw).firstOrNull;
   }
 
-  Future<void> setUserMode(UserMode mode) async {
-    await _prefs.setString(AppConstants.prefUserMode, mode.name);
+  Future<void> setUserMode(UserMode? mode) async {
+    if (mode == null) {
+      await _prefs.remove(AppConstants.prefUserMode);
+    } else {
+      await _prefs.setString(AppConstants.prefUserMode, mode.name);
+    }
   }
 
   // --- Zone (commune / quartier) ---

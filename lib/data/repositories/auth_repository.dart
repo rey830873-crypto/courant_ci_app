@@ -25,19 +25,29 @@ class AuthRepository {
   }
 
   /// Vérifie le code OTP (simulé), puis construit le profil [UserModel].
+  ///
+  /// [displayName] et [email] sont facultatifs (CDC : pas de compte
+  /// obligatoire, l'inscription par téléphone seule reste valide).
   Future<UserModel> verifyOtpAndGetUser(
     String smsCode, {
     required String commune,
     required String quartier,
     String? meterNumber,
     String? phoneNumber, // Ajouté pour la simulation
+    String? displayName,
+    String? email,
   }) async {
     final uid = await _authService.verifyOtp(smsCode);
 
     final user = UserModel(
       uid: uid,
       phoneNumber: phoneNumber ?? '+2250700000000',
-      displayName: 'Utilisateur Courant CI',
+      displayName: (displayName != null && displayName.trim().isNotEmpty)
+          ? displayName.trim()
+          : 'Utilisateur Courant CI',
+      email: (email != null && email.trim().isNotEmpty)
+          ? email.trim()
+          : null,
       commune: commune,
       quartier: quartier,
       meterNumber: meterNumber,

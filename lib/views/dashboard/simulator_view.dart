@@ -70,7 +70,7 @@ class _QuickCalculator extends StatelessWidget {
             children: [
               const Text('Estimation :'),
               Text(
-                '\${vm.resultFcfa.toStringAsFixed(0)} FCFA',
+                '${vm.resultFcfa.toStringAsFixed(0)} FCFA',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
@@ -107,12 +107,12 @@ class _ApplianceEstimator extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(item.name, style: Theme.of(context).textTheme.titleSmall),
-                          Text('\${item.watts}W', style: Theme.of(context).textTheme.bodySmall),
+                          Text('${item.watts}W', style: Theme.of(context).textTheme.bodySmall),
                         ],
                       ),
                     ),
                     Text(
-                      '\${item.monthlyKwh.toStringAsFixed(1)} kWh/mois',
+                      '${item.monthlyKwh.toStringAsFixed(1)} kWh/mois',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -122,7 +122,7 @@ class _ApplianceEstimator extends StatelessWidget {
                   min: 0,
                   max: 24,
                   divisions: 24,
-                  label: '\${item.hoursPerDay.toInt()}h/jour',
+                  label: '${item.hoursPerDay.toInt()}h/jour',
                   onChanged: (val) => vm.updateApplianceHours(index, val),
                 ),
               ],
@@ -143,11 +143,11 @@ class _ApplianceEstimator extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '\${vm.totalMonthlyKwh.toStringAsFixed(1)} kWh',
+                    '${vm.totalMonthlyKwh.toStringAsFixed(1)} kWh',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                   Text(
-                    '\${vm.totalMonthlyFcfa.toStringAsFixed(0)} FCFA',
+                    '${vm.totalMonthlyFcfa.toStringAsFixed(0)} FCFA',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

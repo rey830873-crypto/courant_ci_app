@@ -25,7 +25,7 @@ class UserViewModel extends ChangeNotifier {
     try {
       _bills = await _apiService.fetchBills();
     } catch (e) {
-      debugPrint('Erreur lors du chargement des factures: \$e');
+      debugPrint('Erreur lors du chargement des factures: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

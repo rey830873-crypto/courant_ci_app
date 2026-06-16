@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../core/router/app_routes.dart';
+import '../../../core/router/main_shell_tab_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/zone_status_style.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -140,7 +139,7 @@ class CommuneDetailSheet extends StatelessWidget {
                   icon: Icons.campaign_outlined,
                   onPressed: () {
                     Navigator.of(context).pop();
-                    context.go(AppRoutes.report);
+                    requestTab(MainShellTab.report);
                   },
                 ),
               ),
