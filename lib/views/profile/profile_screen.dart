@@ -11,6 +11,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/report_viewmodel.dart';
 import '../../viewmodels/session_viewmodel.dart';
 import '../../viewmodels/theme_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 /// Profil : récapitule la zone et le compteur enregistrés, le mode
 /// d'accès (invité/inscrit), le plan CIC et les préférences d'affichage.
@@ -22,6 +23,7 @@ class ProfileScreen extends StatelessWidget {
     final session = context.watch<SessionViewModel>();
     final themeVM = context.watch<ThemeViewModel>();
     final reportVM = context.watch<ReportViewModel>();
+    final displayName = context.watch<UserViewModel>().currentUser?.displayName;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
@@ -51,11 +53,20 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        session.isRegistered
-                            ? 'Compte vérifié'
-                            : 'Mode invité',
+                        (session.isRegistered && displayName != null)
+                            ? displayName
+                            : (session.isRegistered
+                                ? 'Compte vérifié'
+                                : 'Mode invité'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      if (session.isRegistered && displayName != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Compte vérifié',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
                       const SizedBox(height: 2),
                       Text(
                         SubscriptionPlan.free.label,
@@ -99,6 +110,7 @@ class ProfileScreen extends StatelessWidget {
           SentinelProgressCard(
             points: reportVM.cicPoints,
             isSentinel: reportVM.isSentinel,
+            requiresAccount: reportVM.requiresAccount,
           ),
           const SizedBox(height: 24),
           Text('Préférences', style: Theme.of(context).textTheme.titleSmall),

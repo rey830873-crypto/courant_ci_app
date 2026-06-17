@@ -8,6 +8,7 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String authChoice = '/auth';
   static const String register = '/auth/register';
+  static const String signIn = '/auth/sign-in';
 
   // Shell principal (bottom navigation)
   static const String dashboard = '/dashboard';

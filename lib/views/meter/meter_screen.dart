@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/primary_button.dart';
@@ -40,40 +42,6 @@ class _MeterScreenState extends State<MeterScreen> {
     final number = _meterNumberController.text.trim();
     if (number.isEmpty) return;
     await context.read<MeterViewModel>().setMeterNumber(number);
-  }
-
-  Future<void> _editMeterNumber() async {
-    final vm = context.read<MeterViewModel>();
-    final controller = TextEditingController(text: vm.meterNumber ?? '');
-
-    final result = await showDialog<String>(
-      context: context,
-      useRootNavigator: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Modifier le numéro de compteur'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Numéro de compteur'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Enregistrer'),
-          ),
-        ],
-      ),
-    );
-
-    controller.dispose();
-    if (result != null && result.isNotEmpty) {
-      await vm.setMeterNumber(result);
-    }
   }
 
   Future<void> _submitReading() async {
@@ -120,32 +88,73 @@ class _MeterScreenState extends State<MeterScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (!hasMeterNumber) ...[
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Configure ton compteur', style: textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Ce numéro identifie ton compteur prépayé CIE.',
-                      style: textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _meterNumberController,
-                      keyboardType: TextInputType.number,
-                      decoration:
-                          const InputDecoration(labelText: 'Numéro de compteur'),
-                    ),
-                    const SizedBox(height: 12),
-                    PrimaryButton(
-                      label: 'Enregistrer',
-                      onPressed: _saveMeterNumber,
-                    ),
-                  ],
+            if (vm.requiresAccount)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: AppCard(
+                  color: AppColors.primaryLight,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.lock_outline,
+                              color: AppColors.primaryDark, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Crée un compte pour gérer ton compteur',
+                              style: textTheme.titleSmall
+                                  ?.copyWith(color: AppColors.primaryDark),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Configurer un compteur et ajouter des relevés '
+                        'demandent un compte vérifié.',
+                        style: textTheme.bodySmall
+                            ?.copyWith(color: AppColors.primaryDark),
+                      ),
+                      const SizedBox(height: 12),
+                      PrimaryButton(
+                        label: 'Créer un compte',
+                        icon: Icons.person_add_alt,
+                        onPressed: () => context.push(AppRoutes.register),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+            if (!hasMeterNumber) ...[
+              if (!vm.requiresAccount)
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Configure ton compteur',
+                          style: textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Ce numéro identifie ton compteur prépayé CIE.',
+                        style: textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _meterNumberController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: 'Numéro de compteur'),
+                      ),
+                      const SizedBox(height: 12),
+                      PrimaryButton(
+                        label: 'Enregistrer',
+                        onPressed: _saveMeterNumber,
+                      ),
+                    ],
+                  ),
+                ),
             ] else ...[
               AppCard(
                 child: Row(
@@ -169,42 +178,43 @@ class _MeterScreenState extends State<MeterScreen> {
                         ],
                       ),
                     ),
-                    TextButton(onPressed: _editMeterNumber, child: const Text('Modifier')),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Text('Nouveau relevé', style: textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text(
-                'Saisis le solde affiché sur ton compteur pour suivre ta '
-                'consommation.',
-                style: textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _balanceController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Solde actuel',
-                        suffixText: 'kWh',
+              if (!vm.requiresAccount) ...[
+                const SizedBox(height: 20),
+                Text('Nouveau relevé', style: textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  'Saisis le solde affiché sur ton compteur pour suivre ta '
+                  'consommation.',
+                  style: textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _balanceController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Solde actuel',
+                          suffixText: 'kWh',
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  PrimaryButton(
-                    label: 'Ajouter',
-                    expand: false,
-                    isLoading: isSubmitting,
-                    onPressed: _submitReading,
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 12),
+                    PrimaryButton(
+                      label: 'Ajouter',
+                      expand: false,
+                      isLoading: isSubmitting,
+                      onPressed: _submitReading,
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 24),
               Text('Historique des relevés', style: textTheme.titleMedium),
               const SizedBox(height: 8),

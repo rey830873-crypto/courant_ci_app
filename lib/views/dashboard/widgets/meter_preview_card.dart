@@ -10,8 +10,13 @@ import '../../../data/models/meter_model.dart';
 /// nombre de jours restants et accès rapide à la recharge.
 class MeterPreviewCard extends StatelessWidget {
   final MeterModel meter;
+  final bool isReadOnly;
 
-  const MeterPreviewCard({super.key, required this.meter});
+  const MeterPreviewCard({
+    super.key,
+    required this.meter,
+    this.isReadOnly = false,
+  });
 
   Color _colorFor(MeterAlertLevel level) {
     switch (level) {
@@ -110,11 +115,12 @@ class MeterPreviewCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          PrimaryButton(
-            label: 'Ajouter un relevé',
-            icon: Icons.edit_note_outlined,
-            onPressed: () => requestTab(MainShellTab.meter),
-          ),
+          if (!isReadOnly)
+            PrimaryButton(
+              label: 'Ajouter un relevé',
+              icon: Icons.edit_note_outlined,
+              onPressed: () => requestTab(MainShellTab.meter),
+            ),
         ],
       ),
     );

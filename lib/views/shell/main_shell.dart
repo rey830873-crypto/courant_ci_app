@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/router/main_shell_tab_controller.dart';
+import '../../core/theme/app_colors.dart';
+import '../../viewmodels/connectivity_viewmodel.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../map/map_screen.dart';
 import '../meter/meter_screen.dart';
@@ -61,10 +64,42 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isOnline = context.watch<ConnectivityViewModel>().isOnline;
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Column(
+        children: [
+          if (!isOnline)
+            Container(
+              width: double.infinity,
+              color: AppColors.danger,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.cloud_off, size: 14, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Hors-ligne · les actions seront envoyées au retour '
+                      'du réseau',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,

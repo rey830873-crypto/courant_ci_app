@@ -1,5 +1,5 @@
 /// Type de signalement communautaire (F4).
-enum ReportType { outage, restored, hazard }
+enum ReportType { outage, restored, hazard, other }
 
 extension ReportTypeX on ReportType {
   String get label {
@@ -10,6 +10,8 @@ extension ReportTypeX on ReportType {
         return 'Courant revenu';
       case ReportType.hazard:
         return 'Danger électrique';
+      case ReportType.other:
+        return 'Autre signalement';
     }
   }
 }

@@ -1,19 +1,23 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import 'user_repository.dart';
 
 /// Repository d'authentification : fait le lien entre [AuthService] (Simulé)
-/// et le modèle métier [UserModel].
+/// et le modèle métier [UserModel], et persiste les profils via
+/// [UserRepository] pour permettre une vraie reconnexion.
 class AuthRepository {
   final AuthService _authService;
+  final UserRepository _userRepo;
 
-  AuthRepository(this._authService);
+  AuthRepository(this._authService, this._userRepo);
 
   // Le service est toujours prêt maintenant qu'on n'utilise plus Firebase
   bool get isFirebaseReady => true;
 
-  /// Crée (simule) un compte à partir du numéro de téléphone, puis
-  /// construit le profil [UserModel].
+  /// Crée (simule) un compte à partir du numéro de téléphone, construit
+  /// le profil [UserModel], et le sauvegarde via [UserRepository] pour
+  /// qu'il soit retrouvable à une future connexion.
   ///
   /// [displayName] et [email] sont facultatifs (CDC : pas de compte
   /// obligatoire, l'inscription par téléphone seule reste valide).
@@ -46,10 +50,18 @@ class AuthRepository {
       createdAt: DateTime.now(),
     );
 
-    // Ici, on pourrait ajouter un appel API pour sauvegarder le profil
-    debugPrint('AuthRepository: Profil utilisateur créé localement pour $uid');
+    await _userRepo.saveUser(user);
+    debugPrint('AuthRepository: Profil sauvegardé pour $phoneNumber');
 
     return user;
+  }
+
+  /// Reconnexion : retrouve un profil déjà inscrit à partir de son
+  /// numéro de téléphone (format E.164). Retourne `null` si aucun
+  /// compte n'existe avec ce numéro — c'est à l'appelant de décider
+  /// quoi faire dans ce cas (proposer de créer un compte, par ex.).
+  Future<UserModel?> signIn(String phoneNumber) async {
+    return _userRepo.findByPhoneNumber(phoneNumber);
   }
 
   Future<void> signOut() => _authService.signOut();

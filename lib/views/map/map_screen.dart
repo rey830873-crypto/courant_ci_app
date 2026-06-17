@@ -74,6 +74,7 @@ class _MapScreenState extends State<MapScreen> {
             top: 16,
             right: 16,
             child: FloatingActionButton.extended(
+              heroTag: 'map_agencies_fab',
               onPressed: () => context.push(AppRoutes.agencies),
               label: const Text('Agences CIE'),
               icon: const Icon(Icons.business),
@@ -84,6 +85,7 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.small(
+        heroTag: 'map_recenter_fab',
         onPressed: _recenterOnUserZone,
         tooltip: 'Centrer sur ma zone',
         child: const Icon(Icons.my_location),

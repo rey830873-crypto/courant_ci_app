@@ -9,11 +9,13 @@ import 'app_card.dart';
 class SentinelProgressCard extends StatelessWidget {
   final int points;
   final bool isSentinel;
+  final bool requiresAccount;
 
   const SentinelProgressCard({
     super.key,
     required this.points,
     required this.isSentinel,
+    this.requiresAccount = false,
   });
 
   @override
@@ -63,6 +65,16 @@ class SentinelProgressCard extends StatelessWidget {
                           'points',
                   style: textTheme.bodySmall,
                 ),
+                if (requiresAccount) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Crée un compte pour participer',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -118,7 +118,8 @@ class ReportViewModel extends ChangeNotifier {
       await _localStorage.addCicPoints(AppConstants.cicPointsPerReport);
 
       _status = ReportSubmissionStatus.success;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('ReportViewModel: échec de submitReport -> $e');
       _status = ReportSubmissionStatus.error;
       _errorMessage =
           'Le signalement n\'a pas pu être envoyé. Vérifie ta connexion.';

@@ -23,6 +23,13 @@ class AuthViewModel extends ChangeNotifier {
   AuthFlowStatus _status = AuthFlowStatus.idle;
   String? _errorMessage;
 
+  /// Vrai uniquement quand [signIn] a échoué parce qu'aucun compte
+  /// n'existe avec ce numéro (par opposition à une erreur technique) —
+  /// permet à l'écran de proposer "Créer un compte" précisément dans
+  /// ce cas, plutôt que d'inspecter le texte de [errorMessage].
+  bool _accountNotFound = false;
+  bool get accountNotFound => _accountNotFound;
+
   AuthFlowStatus get status => _status;
   String? get errorMessage => _errorMessage;
 
@@ -49,6 +56,7 @@ class AuthViewModel extends ChangeNotifier {
   }) async {
     _status = AuthFlowStatus.registering;
     _errorMessage = null;
+    _accountNotFound = false;
     notifyListeners();
 
     try {
@@ -71,6 +79,36 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Reconnexion à partir du numéro de téléphone : retrouve le profil
+  /// déjà créé (sur cet appareil ou un autre) sans repasser par
+  /// l'inscription complète. Si aucun compte n'existe avec ce numéro,
+  /// [accountNotFound] passe à `true` plutôt que de simuler un succès.
+  Future<void> signIn(String phoneNumber) async {
+    _status = AuthFlowStatus.registering;
+    _errorMessage = null;
+    _accountNotFound = false;
+    notifyListeners();
+
+    try {
+      final user = await _repo.signIn(phoneNumber);
+      if (user == null) {
+        _status = AuthFlowStatus.error;
+        _accountNotFound = true;
+        _errorMessage = 'Aucun compte trouvé avec ce numéro.';
+        notifyListeners();
+        return;
+      }
+      _userViewModel.setUser(user);
+      await _session.setUserMode(UserMode.registered);
+      _status = AuthFlowStatus.idle;
+      notifyListeners();
+    } catch (_) {
+      _status = AuthFlowStatus.error;
+      _errorMessage = 'La connexion a échoué, vérifie ta connexion internet.';
+      notifyListeners();
+    }
+  }
+
   /// Efface un message d'erreur affiché précédemment (ex: après
   /// "Modifier le numéro", pour ne pas garder un ancien message visible
   /// au prochain essai).
@@ -78,6 +116,7 @@ class AuthViewModel extends ChangeNotifier {
     if (_status == AuthFlowStatus.error) {
       _status = AuthFlowStatus.idle;
       _errorMessage = null;
+      _accountNotFound = false;
       notifyListeners();
     }
   }

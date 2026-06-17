@@ -28,20 +28,25 @@ class ReportScreen extends StatefulWidget {
 
 class _ReportScreenState extends State<ReportScreen> {
   final _descriptionController = TextEditingController();
+  final _otherDescriptionController = TextEditingController();
+  bool _showOtherField = false;
 
   @override
   void dispose() {
     _descriptionController.dispose();
+    _otherDescriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit(ReportType type) async {
+  Future<void> _submit(ReportType type, {String? description}) async {
     final vm = context.read<ReportViewModel>();
-    final description = _descriptionController.text.trim();
+    final effectiveDescription =
+        description ?? _descriptionController.text.trim();
 
     await vm.submitReport(
       type,
-      description: description.isEmpty ? null : description,
+      description:
+          effectiveDescription.isEmpty ? null : effectiveDescription,
     );
     if (!mounted) return;
 
@@ -51,12 +56,28 @@ class _ReportScreenState extends State<ReportScreen> {
         content: Text('Merci ! Ton signalement a été envoyé à la communauté.'),
       ));
       _descriptionController.clear();
+      _otherDescriptionController.clear();
+      setState(() => _showOtherField = false);
     } else {
       messenger.showSnackBar(SnackBar(
         content: Text(vm.errorMessage ?? 'Une erreur est survenue.'),
       ));
     }
     vm.resetStatus();
+  }
+
+  /// "Autre" exige une précision (un signalement sans aucun détail ne
+  /// dirait rien à la communauté) — contrairement aux 3 autres types,
+  /// auto-explicites par leur seul libellé.
+  Future<void> _submitOther() async {
+    final description = _otherDescriptionController.text.trim();
+    if (description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Précise de quoi il s\'agit avant d\'envoyer.'),
+      ));
+      return;
+    }
+    await _submit(ReportType.other, description: description);
   }
 
   @override
@@ -200,8 +221,38 @@ class _ReportScreenState extends State<ReportScreen> {
                   ? null
                   : () => _submit(ReportType.hazard),
             ),
+            const SizedBox(height: 10),
+            _ReportTypeButton(
+              type: ReportType.other,
+              subtitle: 'Précise de quoi il s\'agit',
+              onTap: (isSubmitting || vm.requiresAccount)
+                  ? null
+                  : () => setState(() => _showOtherField = !_showOtherField),
+            ),
+            if (_showOtherField) ...[
+              const SizedBox(height: 10),
+              TextField(
+                controller: _otherDescriptionController,
+                autofocus: true,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'De quoi s\'agit-il ?',
+                  hintText: 'Ex : poteau penché, transformateur qui grésille...',
+                ),
+              ),
+              const SizedBox(height: 10),
+              PrimaryButton(
+                label: 'Envoyer ce signalement',
+                isLoading: isSubmitting,
+                onPressed: _submitOther,
+              ),
+            ],
             const SizedBox(height: 24),
-            SentinelProgressCard(points: vm.cicPoints, isSentinel: vm.isSentinel),
+            SentinelProgressCard(
+              points: vm.cicPoints,
+              isSentinel: vm.isSentinel,
+              requiresAccount: vm.requiresAccount,
+            ),
             const SizedBox(height: 24),
             Text('Signalements récents dans ta zone',
                 style: textTheme.titleMedium),

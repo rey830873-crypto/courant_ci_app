@@ -58,6 +58,13 @@ class AuthChoiceScreen extends StatelessWidget {
                       icon: Icons.person_add_alt,
                       onPressed: () => context.go(AppRoutes.register),
                     ),
+                    Center(
+                      child: PrimaryButton(
+                        label: 'Déjà inscrit ? Se connecter',
+                        variant: PrimaryButtonVariant.text,
+                        onPressed: () => context.go(AppRoutes.signIn),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     PrimaryButton(
                       label: 'Continuer en invité',

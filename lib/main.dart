@@ -9,9 +9,11 @@ import 'data/repositories/auth_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
 import 'data/repositories/meter_reading_repository.dart';
 import 'data/repositories/report_repository.dart';
+import 'data/repositories/user_repository.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/local_storage_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/connectivity_viewmodel.dart';
 import 'viewmodels/dashboard_viewmodel.dart';
 import 'viewmodels/map_viewmodel.dart';
 import 'viewmodels/meter_viewmodel.dart';
@@ -41,7 +43,9 @@ Future<void> main() async {
 
   final session = SessionViewModel(localStorage);
   final authService = AuthService();
-  final authRepository = AuthRepository(authService);
+  final UserRepository userRepo =
+      firebaseReady ? FirestoreUserRepository() : MockUserRepository();
+  final authRepository = AuthRepository(authService, userRepo);
   final router = AppRouter.create(session);
 
   // Utilisation d'identifiants locaux (Mode API simulé)
@@ -66,6 +70,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: session),
+        ChangeNotifierProvider(create: (_) => ConnectivityViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel(localStorage)),
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => UserViewModel()), // Ajout du UserViewModel

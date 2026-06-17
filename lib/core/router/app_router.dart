@@ -5,6 +5,7 @@ import '../../viewmodels/session_viewmodel.dart';
 import '../../views/about/about_screen.dart';
 import '../../views/auth/auth_choice_screen.dart';
 import '../../views/auth/register_screen.dart';
+import '../../views/auth/sign_in_screen.dart';
 import '../../views/dashboard/simulator_view.dart';
 import '../../views/map/agencies_view.dart';
 import '../../views/onboarding/onboarding_screen.dart';
@@ -77,12 +78,13 @@ class AppRouter {
         // "Terminer"/"Passer cette étape" appelés avec succès).
         //
         // Seul un invité (mode == guest) qui vient d'arriver sur
-        // /auth/register pour créer un compte — par exemple depuis le
-        // bouton "Créer un compte" du profil — doit pouvoir y rester
-        // pendant qu'il remplit le formulaire, sans être éjecté avant
-        // d'avoir terminé.
-        final isFillingRegisterForm =
-            location == AppRoutes.register && mode == UserMode.guest;
+        // /auth/register ou /auth/sign-in — pour créer un compte ou se
+        // reconnecter, par exemple depuis le profil — doit pouvoir y
+        // rester pendant qu'il remplit le formulaire, sans être éjecté
+        // avant d'avoir terminé.
+        final isOnAuthForm = location == AppRoutes.register ||
+            location == AppRoutes.signIn;
+        final isFillingRegisterForm = isOnAuthForm && mode == UserMode.guest;
 
         if (isAuthFlow && !isFillingRegisterForm) {
           return AppRoutes.dashboard;
@@ -106,6 +108,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.register,
           builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.signIn,
+          builder: (context, state) => const SignInScreen(),
         ),
         // Le shell principal (5 onglets) : une seule route GoRouter,
         // l'onglet affiché est géré en interne par MainShell.

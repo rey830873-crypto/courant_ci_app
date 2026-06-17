@@ -14,6 +14,8 @@ extension ReportTypeStyle on ReportType {
         return Icons.bolt;
       case ReportType.hazard:
         return Icons.warning_amber_rounded;
+      case ReportType.other:
+        return Icons.more_horiz;
     }
   }
 
@@ -25,6 +27,8 @@ extension ReportTypeStyle on ReportType {
         return AppColors.success;
       case ReportType.hazard:
         return AppColors.danger;
+      case ReportType.other:
+        return AppColors.textSecondary;
     }
   }
 }

@@ -18,43 +18,61 @@ class MeterStatusSection extends StatelessWidget {
   final String? meterNumber;
   final MeterModel? meter;
   final bool hasConsumptionData;
+  final bool isReadOnly;
 
   const MeterStatusSection({
     super.key,
     required this.meterNumber,
     required this.meter,
     required this.hasConsumptionData,
+    this.isReadOnly = false,
   });
 
   @override
   Widget build(BuildContext context) {
     if (meterNumber == null) {
-      return const _SetupPrompt(
-        icon: Icons.bolt_outlined,
-        title: 'Active le suivi de ton compteur',
-        description:
-            'Renseigne ton numéro de compteur prépayé pour suivre ton '
-            'crédit en temps réel (F2).',
-        actionLabel: 'Configurer mon compteur',
-      );
+      return isReadOnly
+          ? const _ReadOnlyPrompt(
+              icon: Icons.bolt_outlined,
+              title: 'Suivi du compteur',
+              description:
+                  'Crée un compte pour renseigner ton numéro de compteur '
+                  'prépayé et suivre ton crédit en temps réel.',
+            )
+          : const _SetupPrompt(
+              icon: Icons.bolt_outlined,
+              title: 'Active le suivi de ton compteur',
+              description:
+                  'Renseigne ton numéro de compteur prépayé pour suivre ton '
+                  'crédit en temps réel (F2).',
+              actionLabel: 'Configurer mon compteur',
+            );
     }
 
     final currentMeter = meter;
     if (currentMeter == null) {
-      return const _SetupPrompt(
-        icon: Icons.edit_note_outlined,
-        title: 'Ajoute ton premier relevé',
-        description:
-            'Saisis le solde actuel de ton compteur pour démarrer le suivi '
-            'de ton crédit et de ta consommation.',
-        actionLabel: 'Ajouter un relevé',
-      );
+      return isReadOnly
+          ? const _ReadOnlyPrompt(
+              icon: Icons.edit_note_outlined,
+              title: 'Aucun relevé pour le moment',
+              description:
+                  'Crée un compte pour saisir le solde de ton compteur et '
+                  'démarrer le suivi de ton crédit.',
+            )
+          : const _SetupPrompt(
+              icon: Icons.edit_note_outlined,
+              title: 'Ajoute ton premier relevé',
+              description:
+                  'Saisis le solde actuel de ton compteur pour démarrer le '
+                  'suivi de ton crédit et de ta consommation.',
+              actionLabel: 'Ajouter un relevé',
+            );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        MeterPreviewCard(meter: currentMeter),
+        MeterPreviewCard(meter: currentMeter, isReadOnly: isReadOnly),
         if (!hasConsumptionData) ...[
           const SizedBox(height: 12),
           Container(
@@ -83,6 +101,42 @@ class MeterStatusSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _ReadOnlyPrompt extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _ReadOnlyPrompt({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primaryDark),
+          ),
+          const SizedBox(height: 12),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(description, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
     );
   }
 }

@@ -32,6 +32,8 @@ class DashboardScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
+            final isRegistered = context.watch<SessionViewModel>().isRegistered;
+
             return RefreshIndicator(
               onRefresh: vm.refresh,
               child: ListView(
@@ -45,9 +47,10 @@ class DashboardScreen extends StatelessWidget {
                     meterNumber: vm.meterNumber,
                     meter: vm.meter,
                     hasConsumptionData: vm.summary != null,
+                    isReadOnly: !isRegistered,
                   ),
                   const SizedBox(height: 16),
-                  if (context.watch<SessionViewModel>().isRegistered) ...[
+                  if (isRegistered) ...[
                     ConsumptionChartCard(
                       entries: vm.entries,
                       period: vm.period,

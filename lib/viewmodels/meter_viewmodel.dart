@@ -29,6 +29,11 @@ class MeterViewModel extends ChangeNotifier {
 
   String? get meterNumber => _session.meterNumber;
 
+  /// Configurer un compteur ou ajouter un relevé (F2) demande un
+  /// compte vérifié — un invité peut consulter l'aperçu existant (s'il
+  /// y en a un, hérité de l'onboarding), mais ne peut plus le modifier.
+  bool get requiresAccount => !_session.isRegistered;
+
   List<MeterReadingModel> _history = const [];
 
   /// Historique du plus récent au plus ancien.
@@ -53,6 +58,7 @@ class MeterViewModel extends ChangeNotifier {
 
   /// Configure (ou modifie) le numéro de compteur.
   Future<void> setMeterNumber(String meterNumber) async {
+    if (requiresAccount) return;
     await _session.updateMeterNumber(meterNumber);
     notifyListeners();
   }
@@ -60,6 +66,12 @@ class MeterViewModel extends ChangeNotifier {
   /// Ajoute un nouveau relevé de solde. Échoue si aucun numéro de
   /// compteur n'est configuré ou si le solde est négatif.
   Future<void> addReading(double kwhBalance) async {
+    if (requiresAccount) {
+      _status = ReadingSubmissionStatus.error;
+      _errorMessage = 'Crée un compte pour ajouter un relevé.';
+      notifyListeners();
+      return;
+    }
     final number = meterNumber;
     if (number == null || number.isEmpty) {
       _status = ReadingSubmissionStatus.error;
@@ -87,9 +99,17 @@ class MeterViewModel extends ChangeNotifier {
         quartier: _session.quartier ?? '',
       );
       await _readingRepo.addReading(reading);
-      await _loadHistory();
       _status = ReadingSubmissionStatus.success;
-    } catch (_) {
+      notifyListeners();
+      try {
+        await _loadHistory();
+      } catch (e) {
+        debugPrint('MeterViewModel: échec de _loadHistory (après succès '
+            'de addReading) -> $e');
+      }
+      return;
+    } catch (e) {
+      debugPrint('MeterViewModel: échec de addReading -> $e');
       _status = ReadingSubmissionStatus.error;
       _errorMessage =
           'Le relevé n\'a pas pu être enregistré. Vérifie ta connexion.';
