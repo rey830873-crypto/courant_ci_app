@@ -436,29 +436,77 @@ class _MeterPage extends StatelessWidget {
 
 /// Page 4 — Activation des notifications (F1 : "Active pour ne plus être
 /// surpris").
-class _NotificationsPage extends StatelessWidget {
+class _NotificationsPage extends StatefulWidget {
   const _NotificationsPage();
+
+  @override
+  State<_NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<_NotificationsPage> {
+  bool _permissionGranted = false;
+  bool _requesting = false;
+
+  Future<void> _requestPermission() async {
+    setState(() => _requesting = true);
+    final granted =
+        await context.read<NotificationService>().requestPermission();
+    if (mounted) {
+      setState(() {
+        _permissionGranted = granted;
+        _requesting = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return _OnboardingPage(
       children: [
-        Icon(Icons.notifications_active_outlined,
-            size: 40, color: AppColors.primaryDark),
+        Icon(
+          _permissionGranted
+              ? Icons.notifications_active
+              : Icons.notifications_active_outlined,
+          size: 40,
+          color: AppColors.primaryDark,
+        ),
         const SizedBox(height: 16),
         Text('Active pour ne plus être surpris',
             style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 8),
         Text(
           'CIC t\'envoie une alerte dès qu\'une coupure est signalée dans '
-          'ta zone, et dès que ton crédit compteur devient faible. Tu '
-          'pourras gérer ces alertes à tout moment dans ton profil.',
+          'ta zone, et dès que ton crédit compteur devient faible.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 28),
+        if (_permissionGranted)
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline,
+                  color: AppColors.primaryDark, size: 20),
+              const SizedBox(width: 8),
+              Text('Notifications activées !',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: AppColors.primaryDark)),
+            ],
+          )
+        else
+          PrimaryButton(
+            label: 'Activer les notifications',
+            icon: Icons.notifications_outlined,
+            isLoading: _requesting,
+            onPressed: _requestPermission,
+          ),
+        const SizedBox(height: 12),
         Text(
-          'Appuie sur "Terminer" pour découvrir CIC.',
-          style: Theme.of(context).textTheme.labelLarge,
+          _permissionGranted
+              ? 'Appuie sur "Terminer" pour commencer.'
+              : 'Tu pourras modifier ce choix à tout moment dans les '
+                  'réglages de ton téléphone.',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );

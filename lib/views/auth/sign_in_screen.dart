@@ -45,7 +45,7 @@ class _SignInScreenState extends State<SignInScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -114,7 +114,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           icon: Icons.person_add_alt,
                           onPressed: () {
                             authVM.resetError();
-                            context.go(AppRoutes.register);
+                            context.push(AppRoutes.register);
                           },
                         ),
                       ],

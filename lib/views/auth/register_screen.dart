@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/session_viewmodel.dart';
 
 /// Inscription par numéro de téléphone (CDC section 6.2, étape 2). Le
 /// numéro est envoyé au format E.164 avec l'indicatif ivoirien (+225).
@@ -48,12 +51,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _finishRegistration() async {
+    if (!mounted) return;
     final authVM = context.read<AuthViewModel>();
     await authVM.verifyOtp(
       _formattedPhone,
       displayName: _nameController.text.trim(),
       email: _emailController.text.trim(),
     );
+    // Navigation de secours : si le router redirect (refreshListenable)
+    // ne s'est pas déclenché pour une raison quelconque, on force la
+    // navigation vers le tableau de bord.
+    if (!mounted) return;
+    final session = context.read<SessionViewModel>();
+    if (session.isRegistered) {
+      context.go(AppRoutes.dashboard);
+    }
   }
 
   void _skipProfileStep() => _finishRegistration();
@@ -71,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -183,6 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 PrimaryButton(
                   label: 'Modifier le numéro',
                   variant: PrimaryButtonVariant.text,
+                  isLoading: authVM.isBusy,
                   onPressed: _editPhoneNumber,
                 ),
               ],

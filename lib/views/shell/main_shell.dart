@@ -103,7 +103,16 @@ class _MainShellState extends State<MainShell> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        onDestinationSelected: (index) {
+          // Synchro indispensable : ValueNotifier ne notifie que si la
+          // valeur change. Sans cette ligne, un second appui sur
+          // "Signaler" depuis le Dashboard (requestTab(3)) ne déclenche
+          // rien si mainShellTabRequest.value vaut déjà 3 — ce qui
+          // arrivait dès que l'utilisateur revenait sur Accueil via la
+          // barre du bas sans passer par requestTab.
+          mainShellTabRequest.value = index;
+          setState(() => _currentIndex = index);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),

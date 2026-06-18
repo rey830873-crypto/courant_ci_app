@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/router/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_card.dart';
@@ -79,7 +80,24 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Ma zone', style: Theme.of(context).textTheme.titleSmall),
+          Row(
+            children: [
+              Expanded(
+                child: Text('Ma zone',
+                    style: Theme.of(context).textTheme.titleSmall),
+              ),
+              TextButton.icon(
+                onPressed: () => _editZone(context, session),
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text('Modifier'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primaryDark,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           AppCard(
             child: Column(
@@ -100,6 +118,12 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.confirmation_number_outlined,
                   label: 'Compteur',
                   value: session.meterNumber ?? 'Non renseigné',
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit_outlined,
+                        size: 18, color: AppColors.textSecondary),
+                    onPressed: () => _editMeterNumber(context, session),
+                    tooltip: 'Modifier le numéro de compteur',
+                  ),
                 ),
               ],
             ),
@@ -225,11 +249,13 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Widget? trailing;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.trailing,
   });
 
   @override
@@ -242,9 +268,135 @@ class _InfoRow extends StatelessWidget {
           child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
         ),
         Text(value, style: Theme.of(context).textTheme.titleSmall),
+        if (trailing != null) trailing!,
       ],
     );
   }
+}
+
+/// Dialogue de modification de la zone (commune + quartier).
+Future<void> _editZone(
+    BuildContext context, SessionViewModel session) async {
+  String? selectedCommune = session.commune;
+  String? selectedQuartier = session.quartier;
+
+  final communes = AppConstants.abidjanCommunes;
+  List<String> availableQuartiers = selectedCommune != null
+      ? communes
+          .firstWhere((c) => c.name == selectedCommune,
+              orElse: () => communes.first)
+          .quartiers
+      : [];
+
+  await showDialog<void>(
+    context: context,
+    useRootNavigator: false,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) {
+        return AlertDialog(
+          title: const Text('Modifier ma zone'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: selectedCommune,
+                decoration: const InputDecoration(labelText: 'Commune'),
+                items: communes
+                    .map((c) => DropdownMenuItem(
+                          value: c.name,
+                          child: Text(c.name),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  setDialogState(() {
+                    selectedCommune = v;
+                    selectedQuartier = null;
+                    availableQuartiers = communes
+                        .firstWhere((c) => c.name == v)
+                        .quartiers;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: availableQuartiers.contains(selectedQuartier)
+                    ? selectedQuartier
+                    : null,
+                decoration: const InputDecoration(labelText: 'Quartier'),
+                items: availableQuartiers
+                    .map((q) => DropdownMenuItem(
+                          value: q,
+                          child: Text(q),
+                        ))
+                    .toList(),
+                onChanged: (v) =>
+                    setDialogState(() => selectedQuartier = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: (selectedCommune != null && selectedQuartier != null)
+                  ? () async {
+                      Navigator.of(ctx).pop();
+                      await session.updateZone(
+                        commune: selectedCommune!,
+                        quartier: selectedQuartier!,
+                      );
+                    }
+                  : null,
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+/// Dialogue de modification du numéro de compteur.
+Future<void> _editMeterNumber(
+    BuildContext context, SessionViewModel session) async {
+  final controller =
+      TextEditingController(text: session.meterNumber ?? '');
+
+  await showDialog<void>(
+    context: context,
+    useRootNavigator: false,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Numéro de compteur'),
+      content: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Numéro de compteur CIE',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Annuler'),
+        ),
+        TextButton(
+          onPressed: () async {
+            final value = controller.text.trim();
+            Navigator.of(ctx).pop();
+            if (value.isNotEmpty) {
+              await session.updateMeterNumber(value);
+            }
+          },
+          child: const Text('Enregistrer'),
+        ),
+      ],
+    ),
+  );
+
+  controller.dispose();
 }
 
 /// Demande confirmation avant de déconnecter — une action qui ramène

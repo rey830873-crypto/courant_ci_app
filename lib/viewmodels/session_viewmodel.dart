@@ -72,6 +72,19 @@ class SessionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Met à jour la zone (commune/quartier) depuis le profil, sans
+  /// refaire l'onboarding complet. Utilisé par l'édition du profil.
+  Future<void> updateZone({
+    required String commune,
+    required String quartier,
+  }) async {
+    _commune = commune;
+    _quartier = quartier;
+    await _storage.setCommune(commune);
+    await _storage.setQuartier(quartier);
+    notifyListeners();
+  }
+
   /// Déconnexion : efface entièrement les données de session pour que
   /// la personne suivante sur cet appareil (mode invité ou nouvelle
   /// inscription) reparte d'un état vierge — aucune commune, aucun

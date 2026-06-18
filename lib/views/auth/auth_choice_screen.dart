@@ -56,13 +56,13 @@ class AuthChoiceScreen extends StatelessWidget {
                     PrimaryButton(
                       label: 'Créer un compte',
                       icon: Icons.person_add_alt,
-                      onPressed: () => context.go(AppRoutes.register),
+                      onPressed: () => context.push(AppRoutes.register),
                     ),
                     Center(
                       child: PrimaryButton(
                         label: 'Déjà inscrit ? Se connecter',
                         variant: PrimaryButtonVariant.text,
-                        onPressed: () => context.go(AppRoutes.signIn),
+                        onPressed: () => context.push(AppRoutes.signIn),
                       ),
                     ),
                     const SizedBox(height: 12),

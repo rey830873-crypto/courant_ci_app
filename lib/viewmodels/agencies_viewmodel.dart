@@ -4,6 +4,7 @@ import '../data/services/api_service.dart';
 
 class AgenciesViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
+  final String? userCommune;
 
   List<AgencyModel> _allAgencies = [];
   List<AgencyModel> _filteredAgencies = [];
@@ -14,7 +15,11 @@ class AgenciesViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get searchQuery => _searchQuery;
 
-  AgenciesViewModel() {
+  /// Vrai quand une recherche est en cours (pour afficher "Toutes les
+  /// agences" au lieu de "Agences à [commune]").
+  bool get isSearching => _searchQuery.isNotEmpty;
+
+  AgenciesViewModel({this.userCommune}) {
     loadAgencies();
   }
 
@@ -41,15 +46,28 @@ class AgenciesViewModel extends ChangeNotifier {
   }
 
   void _applyFilter() {
-    if (_searchQuery.isEmpty) {
-      _filteredAgencies = List.from(_allAgencies);
-    } else {
+    // Quand l'utilisateur tape une recherche → toutes les agences
+    if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       _filteredAgencies = _allAgencies.where((agency) {
         return agency.name.toLowerCase().contains(query) ||
             agency.commune.toLowerCase().contains(query) ||
             agency.address.toLowerCase().contains(query);
       }).toList();
+      return;
+    }
+
+    // Sans recherche : agences de la commune de l'utilisateur en priorité
+    if (userCommune != null && userCommune!.isNotEmpty) {
+      final communeMatch = _allAgencies
+          .where((a) =>
+              a.commune.toLowerCase() == userCommune!.toLowerCase())
+          .toList();
+      // Si aucune agence pour cette commune, on affiche tout
+      _filteredAgencies =
+          communeMatch.isNotEmpty ? communeMatch : List.from(_allAgencies);
+    } else {
+      _filteredAgencies = List.from(_allAgencies);
     }
   }
 }

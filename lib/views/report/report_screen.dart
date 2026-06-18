@@ -103,7 +103,18 @@ class _ReportScreenState extends State<ReportScreen> {
                           Text('${vm.quartier}, ${vm.commune}',
                               style: textTheme.titleMedium),
                           const SizedBox(height: 4),
-                          Text('Statut réseau actuel', style: textTheme.bodySmall),
+                          Text(vm.zoneStatus!.status.description,
+                              style: textTheme.bodySmall),
+                          if (vm.zoneStatus!.reportCount > 0) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              '${vm.zoneStatus!.reportCount} signalement'
+                              '${vm.zoneStatus!.reportCount > 1 ? 's' : ''} '
+                              'dans les dernières heures',
+                              style: textTheme.bodySmall?.copyWith(
+                                  color: AppColors.textSecondary),
+                            ),
+                          ],
                         ],
                       ),
                     ),

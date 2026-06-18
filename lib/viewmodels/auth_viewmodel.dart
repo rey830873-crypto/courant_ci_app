@@ -82,22 +82,30 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final user = await _repo.verifyOtpAndGetUser(
-        phoneNumber,
-        commune: _session.commune ?? '',
-        quartier: _session.quartier ?? '',
-        meterNumber: _session.meterNumber,
-        displayName: displayName,
-        email: email,
-      );
+      final user = await _repo
+          .verifyOtpAndGetUser(
+            phoneNumber,
+            commune: _session.commune ?? '',
+            quartier: _session.quartier ?? '',
+            meterNumber: _session.meterNumber,
+            displayName: displayName,
+            email: email,
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () =>
+                throw Exception('Délai dépassé. Vérifie ta connexion.'),
+          );
       _userViewModel.setUser(user);
       await _session.setUserMode(UserMode.registered);
       await _syncDownstreamViewModels(user);
       _status = AuthFlowStatus.idle;
       notifyListeners();
-    } catch (_) {
+    } catch (e) {
       _status = AuthFlowStatus.error;
-      _errorMessage = 'La création du compte a échoué, réessaie.';
+      _errorMessage = e.toString().contains('Délai')
+          ? 'Connexion trop lente. Réessaie dans quelques secondes.'
+          : 'La création du compte a échoué, réessaie.';
       notifyListeners();
     }
   }
