@@ -37,7 +37,7 @@ Une application mobile Flutter moderne et performante pour la gestion des servic
    ```
 
 ## 👥 Collaborateurs
-- Développé par **EDERE HERVE REGINA**
+- Développé par **EDERE HERVE REGINA**, **KOUADIO KETSIA** et **KOFFI KOUA**
 
 ---
-© 2024 Courant CI Project.
+© 2026 Courant CI Project.
