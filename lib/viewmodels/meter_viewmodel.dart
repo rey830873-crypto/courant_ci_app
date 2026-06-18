@@ -16,7 +16,7 @@ enum ReadingSubmissionStatus { idle, submitting, success, error }
 class MeterViewModel extends ChangeNotifier {
   final MeterReadingRepository _readingRepo;
   final SessionViewModel _session;
-  final String ownerId;
+  String ownerId;
 
   MeterViewModel({
     required MeterReadingRepository readingRepo,
@@ -25,6 +25,17 @@ class MeterViewModel extends ChangeNotifier {
   })  : _readingRepo = readingRepo,
         _session = session {
     _loadHistory();
+  }
+
+  /// Change le propriétaire des relevés après un changement de compte
+  /// (inscription ou reconnexion), et recharge l'historique pour ce
+  /// nouveau compte — sans cet appel, l'historique affiché resterait
+  /// celui du tout premier compte utilisé sur cet appareil depuis le
+  /// dernier redémarrage de l'application.
+  Future<void> updateOwnerId(String newOwnerId) async {
+    if (newOwnerId == ownerId) return;
+    ownerId = newOwnerId;
+    await _loadHistory();
   }
 
   String? get meterNumber => _session.meterNumber;

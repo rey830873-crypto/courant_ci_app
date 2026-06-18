@@ -60,8 +60,17 @@ class AuthRepository {
   /// numéro de téléphone (format E.164). Retourne `null` si aucun
   /// compte n'existe avec ce numéro — c'est à l'appelant de décider
   /// quoi faire dans ce cas (proposer de créer un compte, par ex.).
+  ///
+  /// Met aussi à jour l'identifiant courant dans [AuthService] : sans
+  /// cela, les relevés de compteur ajoutés après une reconnexion
+  /// resteraient associés au tout dernier identifiant utilisé sur cet
+  /// appareil (un autre compte, ou aucun), plutôt qu'à ce compte.
   Future<UserModel?> signIn(String phoneNumber) async {
-    return _userRepo.findByPhoneNumber(phoneNumber);
+    final user = await _userRepo.findByPhoneNumber(phoneNumber);
+    if (user != null) {
+      await _authService.signInWithPhone(phoneNumber);
+    }
+    return user;
   }
 
   Future<void> signOut() => _authService.signOut();

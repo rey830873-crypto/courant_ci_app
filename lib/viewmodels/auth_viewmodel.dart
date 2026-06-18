@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/repositories/dashboard_repository.dart';
+import 'dashboard_viewmodel.dart';
+import 'meter_viewmodel.dart';
 import 'session_viewmodel.dart';
 import 'user_viewmodel.dart';
 
@@ -18,7 +21,26 @@ class AuthViewModel extends ChangeNotifier {
   final SessionViewModel _session;
   final UserViewModel _userViewModel;
 
-  AuthViewModel(this._repo, this._session, this._userViewModel);
+  /// Ces trois dépendances sont optionnelles (`null` autorisé) pour ne
+  /// pas casser un éventuel test ou usage de [AuthViewModel] qui ne
+  /// les fournirait pas — mais en pratique, `main.dart` les fournit
+  /// toujours, pour que [_syncDownstreamViewModels] puisse vraiment
+  /// propager le nouveau compte (zone, identifiant propriétaire) aux
+  /// ViewModels construits une seule fois au démarrage de l'app.
+  final DashboardViewModel? _dashboardViewModel;
+  final MeterViewModel? _meterViewModel;
+  final MeterConsumptionRepository? _meterConsumptionRepo;
+
+  AuthViewModel(
+    this._repo,
+    this._session,
+    this._userViewModel, {
+    DashboardViewModel? dashboardViewModel,
+    MeterViewModel? meterViewModel,
+    MeterConsumptionRepository? meterConsumptionRepo,
+  })  : _dashboardViewModel = dashboardViewModel,
+        _meterViewModel = meterViewModel,
+        _meterConsumptionRepo = meterConsumptionRepo;
 
   AuthFlowStatus _status = AuthFlowStatus.idle;
   String? _errorMessage;
@@ -70,6 +92,7 @@ class AuthViewModel extends ChangeNotifier {
       );
       _userViewModel.setUser(user);
       await _session.setUserMode(UserMode.registered);
+      await _syncDownstreamViewModels(user);
       _status = AuthFlowStatus.idle;
       notifyListeners();
     } catch (_) {
@@ -100,12 +123,42 @@ class AuthViewModel extends ChangeNotifier {
       }
       _userViewModel.setUser(user);
       await _session.setUserMode(UserMode.registered);
+      await _syncDownstreamViewModels(user);
       _status = AuthFlowStatus.idle;
       notifyListeners();
     } catch (_) {
       _status = AuthFlowStatus.error;
       _errorMessage = 'La connexion a échoué, vérifie ta connexion internet.';
       notifyListeners();
+    }
+  }
+
+  /// Propage la zone (commune/quartier/compteur) et l'identifiant du
+  /// compte qui vient de se connecter ou de s'inscrire vers les
+  /// ViewModels qui en dépendent, mais qui ne les reçoivent
+  /// normalement qu'une seule fois, au démarrage de l'application
+  /// (voir `main.dart`). Sans cet appel, le tableau de bord et
+  /// l'historique du compteur resteraient associés au tout premier
+  /// compte utilisé sur cet appareil depuis le dernier redémarrage
+  /// complet de l'application — quelle que soit la zone réellement
+  /// choisie ou stockée sur le nouveau compte.
+  Future<void> _syncDownstreamViewModels(UserModel user) async {
+    final ownerId = user.uid;
+
+    _meterConsumptionRepo?.updateOwnerAndZone(
+      ownerId: ownerId ?? _meterConsumptionRepo!.ownerId,
+      commune: user.commune,
+      quartier: user.quartier,
+    );
+
+    await _dashboardViewModel?.updateLocation(
+      commune: user.commune,
+      quartier: user.quartier,
+      meterNumber: user.meterNumber,
+    );
+
+    if (ownerId != null) {
+      await _meterViewModel?.updateOwnerId(ownerId);
     }
   }
 
@@ -123,8 +176,9 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Déconnexion : efface la session inscrite (l'UID simulé, le profil
   /// chargé) et fait retomber l'utilisateur sur l'écran "Créer un
-  /// compte / Invité". La zone et le numéro de compteur enregistrés
-  /// pendant l'onboarding restent inchangés.
+  /// compte / Invité". [SessionViewModel.clearUserMode] efface aussi
+  /// la zone et le numéro de compteur enregistrés, pour que la
+  /// personne suivante sur cet appareil reparte d'un état vierge.
   Future<void> signOut() async {
     await _repo.signOut();
     _userViewModel.setUser(null);

@@ -12,6 +12,7 @@ import 'data/repositories/report_repository.dart';
 import 'data/repositories/user_repository.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/local_storage_service.dart';
+import 'data/services/notification_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/connectivity_viewmodel.dart';
 import 'viewmodels/dashboard_viewmodel.dart';
@@ -65,7 +66,13 @@ Future<void> main() async {
     commune: session.commune ?? '',
     quartier: session.quartier ?? '',
   );
-  
+
+  // Notifications locales (alerte coupure dans la zone, crédit
+  // compteur faible) — voir notification_service.dart pour la
+  // distinction avec une vraie notification push.
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
   runApp(
     MultiProvider(
       providers: [
@@ -74,14 +81,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ThemeViewModel(localStorage)),
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => UserViewModel()), // Ajout du UserViewModel
-        ChangeNotifierProvider(
-          create: (context) => AuthViewModel(
-            authRepository,
-            session,
-            context.read<UserViewModel>(),
-          ),
-        ),
         Provider<ReportRepository>.value(value: reportRepo),
+        Provider<MeterConsumptionRepository>.value(value: meterConsumptionRepo),
+        Provider<NotificationService>.value(value: notificationService),
         ChangeNotifierProvider(
           create: (_) => DashboardViewModel(
             consumptionRepo: meterConsumptionRepo,
@@ -90,6 +92,7 @@ Future<void> main() async {
             commune: session.commune ?? '',
             quartier: session.quartier ?? '',
             meterNumber: session.meterNumber,
+            notifications: notificationService,
           ),
         ),
         ChangeNotifierProvider(
@@ -108,6 +111,21 @@ Future<void> main() async {
             readingRepo: meterReadingRepo,
             session: session,
             ownerId: ownerId,
+          ),
+        ),
+        // Déclaré après DashboardViewModel/MeterViewModel/
+        // MeterConsumptionRepository ci-dessus : AuthViewModel a besoin
+        // de les lire (context.read) pour leur propager la zone et
+        // l'identifiant du compte après une inscription ou une
+        // reconnexion réussie (voir AuthViewModel._syncDownstreamViewModels).
+        ChangeNotifierProvider(
+          create: (context) => AuthViewModel(
+            authRepository,
+            session,
+            context.read<UserViewModel>(),
+            dashboardViewModel: context.read<DashboardViewModel>(),
+            meterViewModel: context.read<MeterViewModel>(),
+            meterConsumptionRepo: context.read<MeterConsumptionRepository>(),
           ),
         ),
       ],

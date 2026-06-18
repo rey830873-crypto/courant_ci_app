@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
+import '../../data/services/notification_service.dart';
 import '../../viewmodels/onboarding_viewmodel.dart';
 import '../../viewmodels/session_viewmodel.dart';
 
@@ -47,7 +48,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     setState(() => _isFinishing = true);
     final onboarding = context.read<OnboardingViewModel>();
     final session = context.read<SessionViewModel>();
-    await onboarding.finish(session, meterNumber: _meterController.text);
+    final notifications = context.read<NotificationService>();
+    await onboarding.finish(
+      session,
+      meterNumber: _meterController.text,
+      notifications: notifications,
+    );
     // La redirection vers /auth est gérée par AppRouter (refreshListenable).
   }
 

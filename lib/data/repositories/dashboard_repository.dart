@@ -33,9 +33,9 @@ abstract class ConsumptionRepository {
 class MeterConsumptionRepository
     implements MeterRepository, ConsumptionRepository {
   final MeterReadingRepository _readingRepo;
-  final String ownerId;
-  final String commune;
-  final String quartier;
+  String ownerId;
+  String commune;
+  String quartier;
 
   MeterConsumptionRepository({
     required MeterReadingRepository readingRepo,
@@ -43,6 +43,21 @@ class MeterConsumptionRepository
     required this.commune,
     required this.quartier,
   }) : _readingRepo = readingRepo;
+
+  /// Met à jour le propriétaire et la zone de référence après un
+  /// changement de compte (inscription ou reconnexion) — sans cela,
+  /// les relevés et les comparaisons de voisinage resteraient associés
+  /// au compte précédent, ou à l'appareil, jusqu'au prochain
+  /// redémarrage complet de l'application.
+  void updateOwnerAndZone({
+    required String ownerId,
+    required String commune,
+    required String quartier,
+  }) {
+    this.ownerId = ownerId;
+    this.commune = commune;
+    this.quartier = quartier;
+  }
 
   Future<List<MeterReadingModel>> _myReadings() =>
       _readingRepo.fetchReadings(ownerId);
