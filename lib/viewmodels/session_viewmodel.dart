@@ -72,13 +72,25 @@ class SessionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Déconnexion : efface le mode (invité ou inscrit) pour que
-  /// l'utilisateur retombe sur l'écran "Créer un compte / Invité" au
-  /// prochain démarrage, sans repasser par tout l'onboarding (zone et
-  /// compteur restent enregistrés).
+  /// Déconnexion : efface entièrement les données de session pour que
+  /// la personne suivante sur cet appareil (mode invité ou nouvelle
+  /// inscription) reparte d'un état vierge — aucune commune, aucun
+  /// quartier, aucun numéro de compteur de l'utilisateur précédent ne
+  /// doit rester visible. L'onboarding (choix de zone) est donc à
+  /// refaire au prochain démarrage, ce qui est volontaire : la zone
+  /// appartient à la personne, pas à l'appareil.
   Future<void> clearUserMode() async {
     _userMode = null;
+    _commune = null;
+    _quartier = null;
+    _meterNumber = null;
+    _onboardingDone = false;
+
     await _storage.setUserMode(null);
+    await _storage.setOnboardingDone(false);
+    await _storage.setCommune(null);
+    await _storage.setQuartier(null);
+    await _storage.clearMeterNumber();
     notifyListeners();
   }
 }

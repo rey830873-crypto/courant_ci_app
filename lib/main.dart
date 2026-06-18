@@ -28,7 +28,9 @@ Future<void> main() async {
 
   // Initialise Firebase si le projet a été configuré (`flutterfire
   // configure`, qui génère lib/firebase_options.dart). Si ce fichier
-
+  // n'existe pas encore ou que l'init échoue pour une autre raison, on
+  // continue avec des dépôts simulés (Mock) ci-dessous — l'app reste
+  // utilisable, voir BACKEND.md section 1.
   try {
     await Firebase.initializeApp();
   } catch (e) {
@@ -71,7 +73,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ConnectivityViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel(localStorage)),
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
-        ChangeNotifierProvider(create: (_) => UserViewModel()),
+        ChangeNotifierProvider(create: (_) => UserViewModel()), // Ajout du UserViewModel
         ChangeNotifierProvider(
           create: (context) => AuthViewModel(
             authRepository,

@@ -43,14 +43,22 @@ class LocalStorageService {
   // --- Zone (commune / quartier) ---
   String? getCommune() => _prefs.getString(AppConstants.prefCommune);
 
-  Future<void> setCommune(String commune) async {
-    await _prefs.setString(AppConstants.prefCommune, commune);
+  Future<void> setCommune(String? commune) async {
+    if (commune == null) {
+      await _prefs.remove(AppConstants.prefCommune);
+    } else {
+      await _prefs.setString(AppConstants.prefCommune, commune);
+    }
   }
 
   String? getQuartier() => _prefs.getString(AppConstants.prefQuartier);
 
-  Future<void> setQuartier(String quartier) async {
-    await _prefs.setString(AppConstants.prefQuartier, quartier);
+  Future<void> setQuartier(String? quartier) async {
+    if (quartier == null) {
+      await _prefs.remove(AppConstants.prefQuartier);
+    } else {
+      await _prefs.setString(AppConstants.prefQuartier, quartier);
+    }
   }
 
   // --- Numéro de compteur (F2) ---
