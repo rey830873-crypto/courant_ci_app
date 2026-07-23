@@ -6,7 +6,6 @@ Une application mobile Flutter moderne et performante pour la gestion des servic
 - **Architecture MVVM** : Séparation claire entre la logique métier et l'interface utilisateur pour une maintenance facile.
 - **Gestion de l'Authentification** : Distinction stricte entre le mode "Invité" et l'utilisateur "Enregistré".
 - **Tableau de Bord Complet** : Suivi du solde, consommation électrique (graphiques) et accès rapide aux services.
-- **Paiement Mobile** : Interface intuitive pour le paiement via Orange Money, MTN MoMo et Wave.
 - **Gestion des Factures** : Consultation, historique et paiement des factures en attente.
 - **Signalement d'Incidents** : Possibilité de signaler des pannes ou des dangers directement depuis l'app.
 - **Mode Sombre/Clair** : Support complet des thèmes pour un confort visuel optimal.
